@@ -10,7 +10,7 @@ except ImportError:
     print("impactx not found, cannot convert elegant to impactx line")
 
 def elegant2impactx(elegant_file,
-                    start_element="CLA-FEA-MAG-QUAD-13",
+                    start_element="CLA-FEA-SIM-DIP-04-END",
                     end_element="CLA-FED-SIM-DUMP-01-START",
                     elegant_twi=None,
                     elegant_ps=None):
@@ -125,7 +125,7 @@ def elegant2impactx(elegant_file,
 
     # get charge
     bunch_charge_C = lte['START']['TOTAL']
-    npart = 10000
+    npart = 50000
 
     impactx_twiss0 = None
     if elegant_twi is not None and elegant_ps is None:
