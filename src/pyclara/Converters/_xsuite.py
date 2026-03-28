@@ -15,7 +15,7 @@ except ImportError:
 
 def elegant2xsuite(elegant_file,
                    line_name = "FEBE",
-                   start_element="CLA-FEA-MAG-QUAD-13",
+                   start_element="CLA-FEA-SIM-DIP-04-END",
                    end_element="CLA-FED-SIM-DUMP-01-START",
                    elegant_twi = None,
                    elegant_ps = None) :
