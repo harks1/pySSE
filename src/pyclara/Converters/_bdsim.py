@@ -8,7 +8,7 @@ except ImportError :
 
 def elegant2bdsim_gmad(elegant_file,
                        line_name="FEBE",
-                       start_element="CLA-FEA-MAG-QUAD-13",
+                       start_element="CLA-FEA-SIM-DIP-04-END",
                        end_element="CLA-FED-SIM-DUMP-01-START",
                        elegant_twi=None,
                        elegant_ps=None,
@@ -40,21 +40,80 @@ def elegant2bdsim_gmad(elegant_file,
         if isinstance(elegant_twi, str) :
             elegant_twi = _sdds.load(elegant_twi)
 
-    # create bdsim machine
-    machine = pybdsim.Builder.Machine()
+    be_list = []
 
     # loop over elements
     for k in lte :
         ee = lte[k] # elegant element
+        ename = ee['NAME'].replace('-','_')
+        etype = ee['TYPE']
 
         # skip over LINE
-        if ee['TYPE'].upper() == "LINE":
+        if etype.upper() == "LINE":
             continue
 
-        if ee['TYPE'] == 'CHARGE' :
-            machine.Append(pybdsim.Builder.Marker(k))
-        elif ee['TYPE'] == 'DRIFT':
-            machine.Append(pybdsim.Builder.Drift(k, l=ee['L']))
+        be = None
+        if etype == 'CHARGE' :
+            be = pybdsim.Builder.Marker(ename)
+        elif etype == 'DRIFT':
+            if ee['L'] != 0 :
+                be = pybdsim.Builder.Drift(ename, l=ee['L'])
+            else :
+                be = pybdsim.Builder.Marker(ename)
+        elif etype == 'CSRDRIFT':
+            if ee['L'] == 0 :
+                be = pybdsim.Builder.Marker(ename)
+            else :
+                be  = pybdsim.Builder.Drift(ename,
+                                            l = ee['L'])
+        elif etype == 'LSCDRIFT':
+            if ee['L'] == 0 :
+                be = pybdsim.Builder.Marker(ename)
+            else :
+                be  = pybdsim.Builder.Drift(ename,
+                                            l = ee['L'])
+        elif etype == "CSRCSBEND" or etype == "CSBEND":
+            be = pybdsim.Builder.SBend(ename,
+                                       ee['L'],
+                                       ee['ANGLE'],
+                                       magnetGeometryType="none") # TODO fix for short magnets
+        elif etype == 'KQUAD':
+            be = pybdsim.Builder.Quadrupole(ename,
+                                            ee['L'],
+                                            ee['K1'])
+        elif etype == "KSEXT":
+            be = pybdsim.Builder.Sextupole(ename,
+                                           ee['L'],
+                                           ee['K2'])
+        elif etype == "KICKER": # TODO implement correctly
+            be = pybdsim.Builder.TKicker(ename,
+                                        hkick=0,
+                                        vkick=0,
+                                        l=ee['L'])
+        elif etype == "ECOL":
+            if ee['L'] !=  0 :
+                be = pybdsim.Builder.Drift(ename,
+                                           ee['L'])
+            else :
+                be = pybdsim.Builder.Marker(ename)
+        elif etype == "MAXAMP" :
+            be = pybdsim.Builder.Marker(name = ename)
+        elif etype == 'WATCH':
+            be = pybdsim.Builder.Marker(ename)
+        elif etype == 'MONI' :
+            be = pybdsim.Builder.Drift(ename,
+                                       ee['L'])
+        elif etype == "RFCW" : # TODO implement correctly
+            be = pybdsim.Builder.Drift(ename,
+                                       ee['L'])
+        elif etype == "RFDF" : # TODO implement correctly
+            be = pybdsim.Builder.Drift(ename,
+                                       ee['L'])
+        else :
+            print("element type ", etype, " not recognised, skipping")
+
+        if be is not None :
+            be_list.append(be)
 
     # need to be uppercase
     line_component_names = [e.upper() for e in lte[line_name]['LINE']]
@@ -65,21 +124,26 @@ def elegant2bdsim_gmad(elegant_file,
         end_element = line_component_names[-1]
 
     # select components within range
-    subline_component_names = []
+    subline_components = []
 
     adding = False
     istart = -1
 
-    for i, e in enumerate(line_component_names) :
-        if e == start_element :
+    for i, e in enumerate(be_list) :
+        if e.name == start_element:
             adding = True
             istart = i
 
         if adding :
-            subline_component_names.append(e)
+            subline_components.append(e)
 
-        if e == end_element :
+        if e.name == end_element:
             adding = False
+
+    # create bdsim machine
+    machine = pybdsim.Builder.Machine()
+    for be in subline_components :
+        machine.Append(be)
 
     machine.Write(outputfilename, overwrite=overwrite)
 
