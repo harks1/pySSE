@@ -13,7 +13,9 @@ def elegant2impactx(elegant_file,
                     start_element="CLA-FEA-SIM-DIP-04-END",
                     end_element="CLA-FED-SIM-DUMP-01-START",
                     elegant_twi=None,
-                    elegant_ps=None):
+                    elegant_ps=None,
+                    emitNX = 3e-6,
+                    emitNY = 3e-6):
     '''
     :param elegant_file:
     :type elegant_file: str or dict
@@ -159,8 +161,8 @@ def elegant2impactx(elegant_file,
         impactx_twiss0 = _twiss(beta_x=betax,
                                 beta_y=betay,
                                 beta_t=0.5,
-                                emitt_x=3e-6,
-                                emitt_y=3e-6,
+                                emitt_x=emitNX,
+                                emitt_y=emitNY,
                                 emitt_t=2e-06,
                                 alpha_x=alphax,
                                 alpha_y=alphay,
