@@ -18,6 +18,7 @@ TWISS*
 
 # bdsim
 *gmad
+*root
 
 # plots/notebook output
 *.jpeg
