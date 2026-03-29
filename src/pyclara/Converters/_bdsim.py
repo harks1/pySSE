@@ -13,7 +13,12 @@ def elegant2bdsim_gmad(elegant_file,
                        elegant_twi=None,
                        elegant_ps=None,
                        outputfilename="FEBE.gmad",
-                       overwrite=True):
+                       overwrite=True,
+                       flipMagnets = -1,
+                       particleType="e-",
+                       particleRestMass=0.511,
+                       emitNX = 3,
+                       emitNY = 3):
 
     # load elegant lattice file
     if isinstance(elegant_file, str) :
@@ -80,11 +85,11 @@ def elegant2bdsim_gmad(elegant_file,
         elif etype == 'KQUAD':
             be = pybdsim.Builder.Quadrupole(ename,
                                             ee['L'],
-                                            ee['K1'])
+                                            flipMagnets*ee['K1'])
         elif etype == "KSEXT":
             be = pybdsim.Builder.Sextupole(ename,
                                            ee['L'],
-                                           ee['K2'])
+                                           flipMagnets*ee['K2'])
         elif etype == "KICKER": # TODO implement correctly
             be = pybdsim.Builder.TKicker(ename,
                                         hkick=0,
@@ -144,6 +149,41 @@ def elegant2bdsim_gmad(elegant_file,
     machine = pybdsim.Builder.Machine()
     for be in subline_components :
         machine.Append(be)
+
+    # beam
+    # add twiss to environment if provided
+    if elegant_twi is not None and elegant_ps is None:
+        s = elegant_twi.getColumnValueList('s')[istart]
+        p0 = elegant_twi.getColumnValueList('pCentral0')[istart]
+        betax = elegant_twi.getColumnValueList('betax')[istart]
+        alphax = elegant_twi.getColumnValueList('alphax')[istart]
+        etax = elegant_twi.getColumnValueList('etax')[istart]
+        etaxp = elegant_twi.getColumnValueList('etaxp')[istart]
+
+        betay = elegant_twi.getColumnValueList('betay')[istart]
+        alphay = elegant_twi.getColumnValueList('alphay')[istart]
+        etay = elegant_twi.getColumnValueList('etay')[istart]
+        etayp = elegant_twi.getColumnValueList('etayp')[istart]
+
+        b  = pybdsim.Beam.Beam()
+        b.SetParticleType(particleType)
+        b.SetEnergy(p0*particleRestMass,"MeV")
+        b.SetDistributionType("gausstwiss")
+        b.SetBetaX(betax)
+        b.SetBetaY(betay)
+        b.SetAlphaX(alphax)
+        b.SetAlphaY(alphay)
+        b.SetDispX(etax)
+        b.SetDispY(etay)
+        b.SetDispXP(etaxp)
+        b.SetDispYP(etayp)
+        b.SetEmittanceNX(emitNX)
+        b.SetEmittanceNY(emitNY)
+        b.SetSigmaE(0.001)
+
+        machine.AddBeam(b)
+
+    machine.AddSampler('all')
 
     machine.Write(outputfilename, overwrite=overwrite)
 
