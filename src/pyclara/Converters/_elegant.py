@@ -154,6 +154,124 @@ def elegant_lte_splitter(filename, split_element):
 
     return elements1, elements2
 
+class elegeant_ele:
+    def __init__(self):
+        self.global_settings = {}
+        self.run_setup = {}
+        self.run_control = {}
+        self.twiss_output = {}
+        self.floor_coordinates = {}
+        self.matrix_output = {}
+        self.sdds_beam = {}
+        self.track = {}
+
+        #self.global_settings["inhibit_fsync"] = 0
+
+    def write(self,filename):
+        f = open(filename, "w")
+        self._writedict(f,"global_settings",self.global_settings)
+        self._writedict(f,"run_setup",self.run_setup)
+        self._writedict(f,"run_control",self.run_control)
+        self._writedict(f,"twiss_output",self.twiss_output)
+        self._writedict(f,"floor_coordinates",self.floor_coordinates)
+        self._writedict(f,"matrix_output",self.matrix_output)
+        self._writedict(f,"sdds_beam",self.sdds_beam)
+        self._writedict(f,"track",self.track)
+        f.close()
+
+    def _writedict(self, f, name, d):
+        f.write(f'&{name}\n')
+        for k, v in d.items() :
+            f.write(f'\t{k} = {v}\n')
+        f.write(f'&end\n')
+
+    def read(self,filename):
+        f = open(filename, "r")
+
+        global_settings = False
+        run_control     = False
+        run_setup       = False
+        twiss_output    = False
+        floor_coordinates = False
+        matrix_output   = False
+        sdds_beam       = False
+        track           = False
+        
+        for l in f :
+            if l.strip() == "&run_control":
+                run_control = True
+                continue
+            elif l.strip() == "&global_settings":
+                global_settings = True
+                continue
+            elif l.strip() == "&run_setup":
+                run_setup = True
+                continue
+            elif l.strip() == "&twiss_output":
+                twiss_output = True
+                continue
+            elif l.strip() == "&floor_coordinates":
+                floor_coordinates = True
+                continue
+            elif l.strip() == "&matrix_output":
+                matrix_output = True
+                continue
+            elif l.strip() == "&sdds_beam":
+                sdds_beam = True
+                continue
+            elif l.strip() == "&track":
+                track = True
+                continue
+                
+            if l.strip() == "&end":
+                if run_control: 
+                    run_control = False
+                elif global_settings:
+                    global_settings = False
+                elif run_setup:
+                    run_setup = False   
+                elif twiss_output:
+                    twiss_output = False
+                elif floor_coordinates:
+                    floor_coordinates = False
+                elif matrix_output:
+                    matrix_output = False
+                elif sdds_beam:
+                    sdds_beam = False
+                elif track:
+                    track = False
+                continue
+            
+            if run_control:
+                split_line = l.split()
+                self.run_control[split_line[0]] = split_line[2]
+            if global_settings:
+                split_line = l.split()
+                self.global_settings[split_line[0]] = split_line[2]
+            if run_setup:
+                split_line = l.split()
+                self.run_setup[split_line[0]] = split_line[2]
+            if twiss_output:
+                split_line = l.split()
+                self.twiss_output[split_line[0]] = split_line[2]
+            if floor_coordinates:
+                split_line = l.split()
+                self.floor_coordinates[split_line[0]] = split_line[2]
+            if matrix_output:
+                split_line = l.split()
+                self.matrix_output[split_line[0]] = split_line[2]
+            if sdds_beam:
+                split_line = l.split()
+                self.sdds_beam[split_line[0]] = split_line[2]
+            if track:
+                split_line = l.split()
+                self.track[split_line[0]] = split_line[2]
+
+        f.close()
+
+    
+    
+
 
 def elegant_ele_writer(template_ele, output_ele, run_name,
                         lte_file, beamline, twiss=None, sdds_input=None):
