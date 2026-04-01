@@ -128,3 +128,30 @@ def sdds2fbpic(sddsfile) :
     pybeam = ypbeam * pbeam
 
     return {"x" : xbeam, "y" : ybeam, "xp" : xpbeam, "yp" : ypbeam, "dt" : dtbeam, "p" : pbeam, "px" : pxbeam, "py" : pybeam}
+
+def sdds2beam_dict(sddsfile) :
+    f = sdds.load(sddsfile)
+    x = np.array(f.getColumnValueList("x"))
+    y = np.array(f.getColumnValueList("y"))
+    xp = np.array(f.getColumnValueList("xp"))
+    yp = np.array(f.getColumnValueList("yp"))
+    t = np.array(f.getColumnValueList("t"))
+    p = np.array(f.getColumnValueList("p"))
+
+    x -= x.mean()
+    y -= y.mean()
+    xp -= xp.mean()
+    yp -= yp.mean()
+    t -= t.mean()
+    p0 = p.mean()
+    p -= p0
+
+    zeta = t*constants.c
+    delta = p/p0
+
+    return {"x" : x,
+            "xp" : xp,
+            "y" : y,
+            "yp" : yp,
+            "zeta" : zeta,
+            "delta" : delta}

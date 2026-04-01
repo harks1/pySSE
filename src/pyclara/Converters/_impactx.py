@@ -160,17 +160,17 @@ def elegant2impactx(elegant_file,
 
         impactx_twiss0 = _twiss(beta_x=betax,
                                 beta_y=betay,
-                                beta_t=0.5,
+                                beta_t = 1.0,
                                 emitt_x=emitNX,
                                 emitt_y=emitNY,
-                                emitt_t=2e-06,
+                                emitt_t=6.2e-5,
                                 alpha_x=alphax,
                                 alpha_y=alphay,
                                 alpha_t=0.0,
                                 dispersion_x=etax,
                                 dispersion_y=etay,
                                 dispersion_px=etaxp,
-                                dispersion_py=etayp,)
+                                dispersion_py=etayp)
 
     # require a twiss file
     if elegant_twi is None :
