@@ -5,6 +5,7 @@ import numpy as np
 import h5py
 from scipy import constants
 
+
 def elegant_lte_loader(filename):
     with open(filename) as f:
         content = f.read()
@@ -35,126 +36,177 @@ def elegant_lte_loader(filename):
             except ValueError:
                 params[key.upper()] = val
 
-        if etype.upper() == "LINE" :
-            val = _re.findall(r'=\((.+)\)',params_str)
+        if etype.upper() == "LINE":
+            val = _re.findall(r'=\((.+)\)', params_str)
             elist = []
-            for eval  in val[0].split(","):
+            for eval in val[0].split(","):
                 elist.append(eval.strip())
             params["LINE"] = elist
 
         params['TYPE'] = etype.upper()
         elements[name] = params
 
+
     return dict(elements)
 
-def elegant_lte_writer(elements, filename):
+class elegant_lte:
 
-    with open(filename, 'w') as f:
+    def __init__(self, filename = None, elements = None):
+        if filename is not None:
+            self.filename = filename
+            self.load()
+        if elements is not None:
+            self.elements_dict = elements
 
-        # --- Part 1: write all element definitions ---
-        for name, elem in elements.items():
+    def load(self):
+        with open(self.filename) as f:
+            content = f.read()
 
+        # Remove comments (! and %)
+        content = _re.sub(r'[!%].*', '', content)
+
+        # Join continuation lines
+        content = _re.sub(r'&\s*\n', ' ', content)
+
+        # Find all name&type blocks: NAME: TYPE, key=val, key=val ...
+        pattern = _re.compile(
+            r'([\w-]+)\s*:\s*(\w+)\s*,?\s*([^;]*)',
+            _re.IGNORECASE
+        )
+
+        elements = _defaultdict(list)
+
+        for match in pattern.finditer(content):
+            name, etype, params_str = match.groups()
+            params = {"NAME": name.upper()}
+
+            for kv in _re.findall(r'(\w+)\s*=\s*([^,\n]+)', params_str):
+                key, val = kv
+                val = val.strip().strip('"')
+                try:
+                    params[key.upper()] = float(val)
+                except ValueError:
+                    params[key.upper()] = val
+
+            if etype.upper() == "LINE" :
+                val = _re.findall(r'=\((.+)\)',params_str)
+                elist = []
+                for eval  in val[0].split(","):
+                    elist.append(eval.strip())
+                params["LINE"] = elist
+
+            params['TYPE'] = etype.upper()
+            elements[name] = params
+            self.elements_dict =  dict(elements)
+
+        return self.elements_dict
+
+    def splitter(self, split_element):
+        """split on element split_element e.g [1,2,3, split_element], [5,6...]
+           split_element string
+        """
+
+        # Step 2: find LINE key and the ordered element list
+        line_key  = next(k for k, v in self.elements_dict.items() if v['TYPE'] == 'LINE')
+        full_line = self.elements_dict[line_key]['LINE']
+
+        # Step 3: find split index — exact match
+        if split_element not in full_line:
+
+        # check if a case-insensitive match exists
+            close_match = next(
+                (e for e in full_line if e.upper() == split_element.upper()),
+                None
+            )
+
+            if close_match:
+                raise ValueError(
+                    f"'{split_element}' not found. Did you mean '{close_match}'?"
+                )
+            else:
+                raise ValueError(
+                f"'{split_element}' not found in beamline."
+                )
+
+        split_idx = full_line.index(split_element)
+
+
+        line1 = full_line[:split_idx+1]    # before split element
+        line2 = ['START'] + full_line[split_idx+1:]    # from split element onwards
+
+        # Step 4: build two element dicts
+        set1 = set(e.upper() for e in line1)
+        set2 = set(e.upper() for e in line2)
+
+        elements1 = {}
+        elements2 = {}
+
+        elements2 = {'START': self.elements_dict['START']}
+
+        for name, elem in self.elements_dict.items():
             if elem['TYPE'] == 'LINE':
                 continue
-
-            params = {k: v for k, v in elem.items() if k not in ('NAME', 'TYPE')}
-
-            param_parts = []
-            for k, v in params.items():
-                if isinstance(v, float):
-                    param_parts.append(f'{k} = {v:g}')
-                else:
-                    param_parts.append(f'{k} = "{v}"')
-
-            line = f"{name}: {elem['TYPE']}, " + ', '.join(param_parts) + ';'
-            f.write(_elegant_longname_wrap(line) + '\n')
-
-        # --- Part 2: write the LINE definition at the end ---
-        line_key = next(k for k, v in elements.items() if v['TYPE'] == 'LINE')
-        beamline  = elements[line_key]['LINE']
-
-        chunks   = [beamline[i:i+6] for i in range(0, len(beamline), 6)]
-        line_str = ', &\n'.join(', '.join(chunk) for chunk in chunks)
-        f.write(f"\n{line_key}: LINE=({line_str})\n")
+            if name.upper() in set1:
+                elements1[name] = elem
+            elif name.upper() in set2:
+                elements2[name] = elem
 
 
-def _elegant_longname_wrap(line, width=100):
+        # Step 5: add LINE entries to each dict
+        elements1[line_key + '_1'] = {'NAME': line_key + '_1', 'TYPE': 'LINE', 'LINE': line1}
+        elements2[line_key + '_2'] = {'NAME': line_key + '_2', 'TYPE': 'LINE', 'LINE': line2}
 
-    if len(line) <= width:
-        return line
+        return elegant_lte(elements=elements1), elegant_lte(elements=elements2)
 
-    parts   = line.split(', ')
-    result  = []
-    current = ''
+    def writer(self, outputfile):
+        with open(outputfile, 'w') as f:
 
-    for part in parts:
-        if len(current) + len(part) > width:
-            result.append(current.rstrip(', ') + ', &')
-            current = part + ', '
-        else:
-            current += part + ', '
+            # --- Part 1: write all element definitions ---
+            for name, elem in self.elements_dict.items():
 
-    result.append(current.rstrip(', '))
-    return '\n'.join(result)
+                if elem['TYPE'] == 'LINE':
+                    continue
 
-def elegant_lte_splitter(filename, split_element):
+                params = {k: v for k, v in elem.items() if k not in ('NAME', 'TYPE')}
 
-    # Step 1: load the full file
-    elements = elegant_lte_loader(filename)
+                param_parts = []
+                for k, v in params.items():
+                    if isinstance(v, float):
+                        param_parts.append(f'{k} = {v:g}')
+                    else:
+                        param_parts.append(f'{k} = "{v}"')
 
-    # Step 2: find LINE key and the ordered element list
-    line_key  = next(k for k, v in elements.items() if v['TYPE'] == 'LINE')
-    full_line = elements[line_key]['LINE']
+                line = f"{name}: {elem['TYPE']}, " + ', '.join(param_parts) + ';'
+                f.write(self._longname_wrap(line) + '\n')
 
-    # Step 3: find split index — exact match
-    if split_element not in full_line:
-    
-    # check if a case-insensitive match exists
-        close_match = next(
-            (e for e in full_line if e.upper() == split_element.upper()), 
-            None
-        )
-    
-        if close_match:
-            raise ValueError(
-                f"'{split_element}' not found. Did you mean '{close_match}'?"
-            )
-        else:
-            raise ValueError(
-            f"'{split_element}' not found in beamline."
-            )
+            # --- Part 2: write the LINE definition at the end ---
+            line_key = next(k for k, v in self.elements_dict.items() if v['TYPE'] == 'LINE')
+            beamline = self.elements_dict[line_key]['LINE']
 
-    split_idx = full_line.index(split_element)
+            chunks = [beamline[i:i + 6] for i in range(0, len(beamline), 6)]
+            line_str = ', &\n'.join(', '.join(chunk) for chunk in chunks)
+            f.write(f"\n{line_key}: LINE=({line_str})\n")
 
+    def _longname_wrap(self, line, width=100):
 
-    line1 = full_line[:split_idx+1]    # before split element
-    line2 = ['START'] + full_line[split_idx+1:]    # from split element onwards
+        if len(line) <= width:
+            return line
 
-    # Step 4: build two element dicts
-    set1 = set(e.upper() for e in line1)
-    set2 = set(e.upper() for e in line2)
+        parts = line.split(', ')
+        result = []
+        current = ''
 
-    elements1 = {}
-    elements2 = {}
+        for part in parts:
+            if len(current) + len(part) > width:
+                result.append(current.rstrip(', ') + ', &')
+                current = part + ', '
+            else:
+                current += part + ', '
 
-    elements2 = {'START': elements['START']} 
+        result.append(current.rstrip(', '))
+        return '\n'.join(result)
 
-    for name, elem in elements.items():
-        if elem['TYPE'] == 'LINE':
-            continue
-        if name.upper() in set1:
-            elements1[name] = elem
-        elif name.upper() in set2:
-            elements2[name] = elem
-
-
-    # Step 5: add LINE entries to each dict
-    elements1[line_key + '_1'] = {'NAME': line_key + '_1', 'TYPE': 'LINE', 'LINE': line1}
-    elements2[line_key + '_2'] = {'NAME': line_key + '_2', 'TYPE': 'LINE', 'LINE': line2}
-
-    return elements1, elements2
-
-class elegeant_ele:
+class elegant_ele:
     def __init__(self):
         self.global_settings = {}
         self.run_setup = {}
@@ -269,9 +321,6 @@ class elegeant_ele:
 
         f.close()
 
-    
-    
-
 
 def elegant_ele_writer(template_ele, output_ele, run_name,
                         lte_file, beamline, twiss=None, sdds_input=None):
@@ -306,7 +355,7 @@ def elegant_ele_writer(template_ele, output_ele, run_name,
         f.write(content)
 
 
-def fbpic2sdds(inputfile, outputfile, particles_group):
+def fbpic2sdds(inputfile, outputfile, z_offset,  particles_group):
 
     x_all = []
     y_all= []
@@ -319,7 +368,8 @@ def fbpic2sdds(inputfile, outputfile, particles_group):
 
         iteration = list(f["data"].keys())[0]
 
-        for particle in particles_group :
+        for particle in particles_group:
+            if particle != "electrons":
                 x_all.append(f[f"/data/{iteration}/particles/{particle}/position/x"][:])
                 y_all.append(f[f"/data/{iteration}/particles/{particle}/position/y"][:])
                 z_all.append(f[f"/data/{iteration}/particles/{particle}/position/z"][:])
@@ -329,10 +379,10 @@ def fbpic2sdds(inputfile, outputfile, particles_group):
                 c_all += f[f"/data/{iteration}/particles/{particle}/charge"].attrs["value"]
     x  = np.concatenate(x_all)
     y  = np.concatenate(y_all)
-    z  = np.concatenate(z_all)
-    px = np.concatenate(px_all)
-    py = np.concatenate(py_all)
-    pz = np.concatenate(pz_all)
+    z  = np.concatenate(z_all) + z_offset
+    px = np.concatenate(px_all)/constants.m_e/constants.c
+    py = np.concatenate(py_all)/constants.m_e/constants.c
+    pz = np.concatenate(pz_all)/constants.m_e/constants.c
     n  = np.arange(1, len(x)+1)
 
     t = z / constants.c
@@ -348,7 +398,8 @@ def fbpic2sdds(inputfile, outputfile, particles_group):
         "SDDS files converted from hdf5 files from FBPIC",
         "x xp y yp t p dt" 
     )
-    sdds_obj.defineParameter("c", units='C', description='Charge of the beam')
+    sdds_obj.defineParameter("pCentral", symbol="p$bcen$n", units='m$be$nc', description="Reference beta*gamma",type=sdds.SDDS_DOUBLE)
+    sdds_obj.defineParameter("charge", units='C', description="Bunch charge before sampling")
     sdds_obj.defineParameter("Particles", description='Number of particles',type=sdds.SDDS_LONG)
     sdds_obj.defineColumn("x",  units="m")
     sdds_obj.defineColumn("xp")
@@ -368,11 +419,13 @@ def fbpic2sdds(inputfile, outputfile, particles_group):
         "dt" : dt.tolist(),
         "particleID" : n.tolist()
     }
-    sdds_obj.setParameterValue("c", c_all , page=1)
+    sdds_obj.setParameterValue("charge", c_all , page=1)
     sdds_obj.setParameterValue("Particles", len(x) , page=1)
+    sdds_obj.setParameterValue("pCentral", np.average(p), page=1)
     for col_name, col_data in columns_page1.items():
         sdds_obj.setColumnValueList(col_name, col_data, page=1)
 
+    sdds_obj.mode = sdds.SDDS.SDDS_BINARY
     sdds_obj.save(outputfile)
 
 def sdds2fbpic(sddsfile) :
@@ -415,9 +468,9 @@ def fbpic2twiss(inputfile , particles_group):
     x  = np.concatenate(x_all)
     y  = np.concatenate(y_all)
     z  = np.concatenate(z_all)
-    px = np.concatenate(px_all)
-    py = np.concatenate(py_all)
-    pz = np.concatenate(pz_all)
+    px = np.concatenate(px_all)/constants.m_e/constants.c
+    py = np.concatenate(py_all)/constants.m_e/constants.c
+    pz = np.concatenate(pz_all)/constants.m_e/constants.c
     w = np.concatenate(w_all)
 
     p_central = np.average(pz, weights=w)
