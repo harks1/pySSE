@@ -71,6 +71,12 @@ class Elegant_runner():
                     file = f'{inputdir}/{n}'
                     with open(file, 'r') as f:
                         self.wakefiles[n] = f.read()
+        self.cmd = [
+            "/lib64/mpich/bin/mpirun",
+            "-np", "6",
+            "/elegant/elegant/bin/Linux-x86_64/Pelegant",
+            f"{self.name}.ele"
+        ]
 
     def set_input_sdds(self, input_particle):
         """
@@ -202,14 +208,8 @@ class Elegant_runner():
                 /elegant/elegant/bin/Linux-x86_64/Pelegant and mpirun at
                 /lib64/mpich/bin/mpirun.
         """
-        cmd = [
-            "/lib64/mpich/bin/mpirun",
-            "-np", "6",
-            "/elegant/elegant/bin/Linux-x86_64/Pelegant",
-            f"{self.name}.ele"
-        ]
         result = subprocess.run(
-            cmd,
+            self.cmd,
             cwd=self.run_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
