@@ -45,7 +45,7 @@ class Elegant_runner():
         
     Examples
     --------
-    # e = Elegant_runner('/path/to/elegant', 'FEBE', '/path/to/output')
+    # e = Elegant_runner('/path/to/elegant_input', 'FEBE', '/path/to/output')
     # e.set_input_h5(h5py.File('input.h5', 'r'))
     # e.write_elegant_input()
     # e.run()
@@ -202,12 +202,20 @@ class Elegant_runner():
                 Runs Pelegant with 6 MPI processes in the run directory.
                 stdout and stderr are captured and printed.
 
-                Notes
-                -----
-                Requires Pelegant to be installed at
+                default Requires Pelegant to be installed at
                 /elegant/elegant/bin/Linux-x86_64/Pelegant and mpirun at
                 /lib64/mpich/bin/mpirun.
-        """
+
+                But you always can set cmd as
+                # e = Elegant_runner('/path/to/elegant_input', 'FEBE', '/path/to/output')
+                # e.cmd = [
+                #     'mpirun',       # or full path — find with: which mpirun
+                #     '-np', '32',    # number of cores
+                #     'Pelegant',     # or full path — find with: which Pelegant
+                #     f'{e.name}.ele'
+                # ]
+                # e.run()
+            """
         result = subprocess.run(
             self.cmd,
             cwd=self.run_dir,
