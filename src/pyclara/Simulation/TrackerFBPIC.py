@@ -77,14 +77,14 @@ class Fbpic_runner:
     # --------------------
     # Simulation parameters
     # --------------------
-    def set_Sim_control(self, n_order = -1, Nm = 2 ):
+    def set_Sim_control(self, use_cuda = False, n_order = -1, Nm = 2 ):
         """
                 Set simulation control parameters.
 
                 Sets CUDA usage, spectral solver order, and number of
                 azimuthal modes.
         """
-        self.use_cuda = True
+        self.use_cuda = use_cuda
         self.n_order = n_order  # Infinite-order solver
         self.Nm = Nm  # Azimuthal modes
 
