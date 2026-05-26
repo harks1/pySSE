@@ -1,5 +1,5 @@
 import numpy as np
-import pyclara
+import pySSE
 import h5py
 from scipy.constants import c, e, m_e, m_p, epsilon_0
 from fbpic.main import Simulation

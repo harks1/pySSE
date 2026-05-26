@@ -1,6 +1,6 @@
 import h5py
 
-import pyclara
+import pySSE
 import sdds
 import subprocess
 from pathlib import Path
