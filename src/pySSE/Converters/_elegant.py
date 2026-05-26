@@ -534,7 +534,7 @@ class elegant_ele:
         | etap_x     | twiss_output        | Horizontal disp. prime    |
         | etap_y     | twiss_output        | Vertical disp. prime      |
         | input      | sdds_beam           | Input SDDS filename       |
-         +------------+---------------------+---------------------------+
+        +------------+---------------------+---------------------------+
 
         Parameters
         ----------
@@ -580,9 +580,9 @@ def fbpic2sdds(input, z_offset = 0,  particles_group = ["beam"]):
         Coordinate conventions
         ----------------------
         - FBPIC momenta (ux, uy, uz) are in SI units [kg·m/s], normalised
-          to m_e*c to give βγ.
+          to m_e*c to give beta gamma.
         - Elegant uses xp = px/p, yp = py/p (divergence angles) and
-          p = |βγ| (total momentum in units of m_e*c).
+          p = beta gamma (total momentum in units of m_e*c).
         - Time coordinate t = z/c, relative time dt = t - mean(t).
 
         Parameters

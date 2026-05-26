@@ -55,6 +55,7 @@ def _parse_header(data):
 
 def _read_val(data, offset, dtype):
     """Read a single value of the given SDDS type; return (value, new_offset)."""
+
     if dtype == "double":
         return struct.unpack_from("<d", data, offset)[0], offset + 8
     elif dtype in ("long", "ulong"):
@@ -65,12 +66,12 @@ def _read_val(data, offset, dtype):
         return data[offset: offset + length].decode("latin-1"), offset + length
     return None, offset
 
-
 def _find_element_offset(data, element_name):
-    """
-    Locate the byte offset of the ElementName string in the binary payload.
+
+    """ Locate the byte offset of the ElementName string in the binary payload.
     SDDS stores strings as int32 length + bytes, so we search for that pattern.
     """
+
     needle = len(element_name).to_bytes(4, "little") + element_name.encode("latin-1")
     positions = []
     start = 0

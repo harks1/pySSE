@@ -7,8 +7,6 @@ from fbpic.openpmd_diag import FieldDiagnostic, ParticleDiagnostic
 from fbpic.lpa_utils.bunch import add_particle_bunch_gaussian
 from fbpic.lpa_utils.bunch import add_particle_bunch_from_arrays
 
-
-
 class Fbpic_runner:
     """
     Runs FBPIC plasma wakefield simulations as part of an S2E pipeline.
@@ -46,12 +44,14 @@ class Fbpic_runner:
         Background plasma ion (proton) species.
     beam : fbpic species
         Beam (driver) particle species.
+
     Examples
     --------
     # f = Fbpic_runner('/path/to/output')
     # f.set_plasma_density(1e22)
     # output = f.track(elegant_output_h5)
     """
+
     def __init__(self, outputdir):
         # Simulation parameters
         self.set_Sim_control()
@@ -247,6 +247,7 @@ class Fbpic_runner:
 
 
     def set_input_Gaussian(self, sigma_z =1.4e-5, sigma_r =1.85e-5, n_emit=4.426719e-6, sig_gamma=6.05, n_macroparticles=262144, injection_plane= 1):
+
         """
         Inject a Gaussian witness beam into the simulation.
 
@@ -266,6 +267,7 @@ class Fbpic_runner:
             z position of the injection plane in units of lambda_p.
             Default is 1.
         """
+
         self.gamma_b = self.total_charge / 0.511  # Mev/0.511 Reduced from extremely high value
         # Make beam much more compact: ~10 µm instead of ~84 µm
         self.beam_sigma_z = sigma_z  # Longitudinal RMS size ~8 µm

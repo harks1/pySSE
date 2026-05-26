@@ -27,3 +27,5 @@ TWISS*
 *.pdf
 *.ps
 *.eps
+
+docs/build/*

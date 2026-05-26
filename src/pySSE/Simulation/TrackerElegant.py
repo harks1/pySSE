@@ -51,6 +51,7 @@ class Elegant_runner():
     # e.run()
     # output = e.get_output()
     """
+
     def __init__(self, inputdir, name, run_dir):
         self.name = name
         self.run_dir = run_dir
@@ -120,24 +121,28 @@ class Elegant_runner():
 
     def set_input(self, input_particle, s=0):
         """
-                Automatically detect input type and set the particle distribution.
+        Automatically detect input type and set the particle distribution.
 
-                Calls set_input_sdds() for .sdds file paths and set_input_h5()
-                for HDF5 file objects.
+        Calls set_input_sdds() for .sdds file paths and set_input_h5()
+        for HDF5 file objects.
 
-                Parameters
-                ----------
-                input_particle : str or h5py.File
-                    Either a path to a .sdds file, or an open h5py.File object
-                    in OpenPMD format.
-                s : int, optional
-                    Iteration index, only used for HDF5 input. Default is 0.
+        Parameters
+        ----------
 
-                Raises
-                ------
-                ValueError
-                    If the input type is not a .sdds path or h5py.File object.
-                """
+        input_particle : str or h5py.File
+            Either a path to a .sdds file, or an open h5py.File object
+            in OpenPMD format.
+        s : int, optional
+            Iteration index, only used for HDF5 input. Default is 0.
+
+        Raises
+        ------
+
+        ValueError :
+            If the input type is not a .sdds path or h5py.File object.
+
+        """
+
         if isinstance(input_particle, str) and input_particle.endswith('.sdds'):
 
             self.set_input_sdds(input_particle)
@@ -151,19 +156,19 @@ class Elegant_runner():
 
     def write_elegant_input(self):
         """
-                Write all Elegant input files to the run directory.
+        Write all Elegant input files to the run directory.
 
-                Creates the run directory if it does not exist, then writes:
-                - The lattice file ({name}.lte)
-                - The run file ({name}.ele), with lattice, beamline, and input
-                  beam updated to match the current simulation name and input
-                - The input particle distribution ({name}_input.sdds)
-                - Any wake files referenced in the lattice
+        Creates the run directory if it does not exist, then writes:
+        - The lattice file ({name}.lte)
+        - The run file ({name}.ele), with lattice, beamline, and input
+          beam updated to match the current simulation name and input
+        - The input particle distribution ({name}_input.sdds)
+        - Any wake files referenced in the lattice
 
-                If the input was set from an HDF5 file (detect=True), Twiss
-                parameters are also updated from the input distribution using
-                fbpic2twiss. Otherwise the existing .ele file is used with
-                string substitution.
+        If the input was set from an HDF5 file (detect=True), Twiss
+        parameters are also updated from the input distribution using
+        fbpic2twiss. Otherwise the existing .ele file is used with
+        string substitution.
         """
         os.makedirs(self.run_dir, exist_ok=True)
         filepath1 = os.path.join(self.run_dir, f'{self.name}.lte')
