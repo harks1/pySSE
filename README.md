@@ -22,11 +22,9 @@ easily swap out different codes and models at each stage of the simulation.
 ```text
 pySSE/
 │
-├── Info/             # project overview and documentation
-├── Injector/         # ASTRA injector simulations
-├── Output/           # simulation results and data
-├── PostInjector/     # Simframe and Elegant input files
-├── src/              # python project source code 
+├── Machines/         # Files associated with particle accelerators
+├── Notebooks/        # Example Jupyter notebooks
+├── src/pySSE/        # Main source code for the S2E pipeline
 └── README.md
 
 ---
