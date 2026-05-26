@@ -12,7 +12,6 @@ easily swap out different codes and models at each stage of the simulation.
 
 ### Tools used
 
-- ASTRA — injector modelling (optional)
 - Elegant — beam tracking through linac and beamline
 - FBPIC — plasma wakefield simulation
 - Python — data processing and analysis
