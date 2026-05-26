@@ -1,13 +1,12 @@
-# Start-to-End-S2E-simulation-for-CLARA-FEBE
+# pySSE (Simple Start End)
 
 ## Overview
-
 This repository contains a full **Start-to-End (S2E) simulation pipeline** for beam 
-dynamics at the CLARA-FEBE beamline
+dynamics. 
 
-The workflow connects conventional accelerator tracking codes with plasma simulation 
-tools to study **beam-driven plasma wakefield acceleration (PWFA)** using realistic 
-electron beam distributions.
+The workflow connects conventional accelerator tracking codes with non accelerator tracking codes, for 
+example plasma wakefield simulation. The pipeline is designed to be modular and flexible, allowing users to 
+easily swap out different codes and models at each stage of the simulation.
 
 ---
 
@@ -22,7 +21,7 @@ electron beam distributions.
 ## Repository Structure
 
 ```text
-clara-s2e/
+pySSE/
 │
 ├── Info/             # project overview and documentation
 ├── Injector/         # ASTRA injector simulations
@@ -39,8 +38,8 @@ clara-s2e/
 Clone the repository:
 
 ```bash
-git clone -b elegant https://github.com/Shuyan0224/pyclara.git S2E
-cd S2E
+git clone -b https://github.com/stewartboogert/pySSE.git
+cd pySSE
 pip install -e .
 ```
 **Note:** Elegant/Pelegant must be installed separately. See [Docker](#docker) for a pre-built environment.
@@ -50,7 +49,7 @@ pip install -e .
 Run this once before your first simulation to split the lattice and create the input files:
  
 ```python
-import pyclara
+import pySSE
  
 inputdir = '/path/to/elegant'
  
@@ -70,16 +69,16 @@ ele.write(f'{inputdir}/FEBE2.ele')
  
 ```python
 import h5py
-import pyclara
+import pySSE
  
 inputdir = '/path/to/elegant'
 run_dir  = '/path/to/output'
  
-elegant1 = pyclara.Simulation.TrackerElegant.Elegant_runner(inputdir, 'FEBE1', run_dir)
-fbpic    = pyclara.Simulation.TrackerFBPIC.Fbpic_runner(run_dir)
-elegant2 = pyclara.Simulation.TrackerElegant.Elegant_runner(inputdir, 'FEBE2', run_dir)
+elegant1 = pySSE.Simulation.TrackerElegant.Elegant_runner(inputdir, 'FEBE1', run_dir)
+fbpic    = pySSE.Simulation.TrackerFBPIC.Fbpic_runner(run_dir)
+elegant2 = pySSE.Simulation.TrackerElegant.Elegant_runner(inputdir, 'FEBE2', run_dir)
  
-s = pyclara.Simulation.TrackerBeamline.TrackerBeamline()
+s = pySSE.Simulation.TrackerBeamline.TrackerBeamline()
 s.set_input_particles('/path/to/elegant/FEBE_input.sdds')
 s.add_tracker(elegant1)
 s.add_tracker(fbpic)
@@ -91,7 +90,7 @@ final_particles = s.track(save_step=True)
 ## Elegant_runner Parameters
  
 ```python
-e = pyclara.Simulation.TrackerElegant.Elegant_runner(inputdir, 'FEBE1', run_dir)
+e = pySSE.Simulation.TrackerElegant.Elegant_runner(inputdir, 'FEBE1', run_dir)
  
 # input — auto-detects type, pass either an h5py.File or a .sdds path
 e.set_input(h5py.File('input.h5', 'r'))   # from FBPIC output
@@ -295,7 +294,7 @@ Output directory for convenience。
 For example from elegant to ImpactX. Move to the PostInjector directory and run 
 
 ```python
-import pyclara
+import pySSE
 import yaml
 
 f = open("lattice.yaml")
