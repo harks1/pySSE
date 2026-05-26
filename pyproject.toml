@@ -1,5 +1,5 @@
 [project]
-name = "pyclara"
+name = "pySSE"
 requires-python = ">=3.9"
 dynamic = ["version"]
 readme = "README.md"
@@ -39,4 +39,4 @@ requires = ["setuptools","setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-write_to = "src/pyclara/_version.py"
+write_to = "src/pySSE/_version.py"
